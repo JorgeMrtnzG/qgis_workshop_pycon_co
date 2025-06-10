@@ -1,3 +1,6 @@
+from qgis.core import QgsVectorLayer
+
+'''
 import requests
 
 API_URL = "https://earthquake.usgs.gov/fdsnws/event/1/query"
@@ -25,8 +28,19 @@ params = dict(
 
 resp = requests.get(API_URL, params=params)
 resp.raise_for_status()
+'''
 
-print(resp.content.decode())
+url = 'https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=2010-01-01&minmagnitude=6&endtime=2025-07-06&minlongitude=-81.84157144599999&maxlongitude=-66.84631228799998&minlatitude=-4.227109999999925&maxlatitude=13.394482681000056'
+
+
+layer = QgsVectorLayer(url, "events", "ogr")
+print(layer.isValid())
+project = QgsProject.instance()
+project.addMapLayer(layer)
+
+
+
+# print(resp.content.decode())
 
 
 
