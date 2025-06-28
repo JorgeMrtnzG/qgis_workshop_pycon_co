@@ -1,12 +1,14 @@
 import requests
 from csv import DictReader
-from datetime import datetime, date
+from qgis.core import *
+from datetime import datetime, timedelta
+from PyQt5.QtCore import QVariant
+
+END_DATE = datetime.now()
+START_DATE = (END_DATE - timedelta(days=365 * 10)).replace(month=1, day=1)
 
 EVENTS_LAYER_NAME = "events"
-BOUNDARIES_LAYER_NAME = "boundaries"
-
 API_URL = "https://earthquake.usgs.gov/fdsnws/event/1/query"
-BOUNDARIES_URL = "https://raw.githubusercontent.com/WFP-VAM/prism-app/refs/heads/master/frontend/public/data/global/adm0_simplified.json"
 
 FIELDS = [
     QgsField("id", QVariant.String),
@@ -24,9 +26,9 @@ def get_api_features(extent, start_date, end_date, min_magnitude):
 
     params = dict(
         format="csv",
-        starttime=start_date,
+        starttime=start_date.date(),
         minmagnitude=min_magnitude,
-        endtime=end_date,
+        endtime=end_date.date(),
         minlongitude=min_lon,
         maxlongitude=max_lon,
         minlatitude=min_lat,
@@ -61,25 +63,29 @@ def create_qgis_feature(fields, row):
     return feature
 
 
+def create_usgs_layer(extent):
+    api_features = get_api_features(extent, START_DATE, END_DATE, 5)
+
+    events_layer = QgsVectorLayer("Point", EVENTS_LAYER_NAME, "memory")
+    provider = events_layer.dataProvider()
+
+    provider.addAttributes(fields)
+    events_layer.updateFields()
+
+    features = [create_qgis_feature(fields, r) for r in api_features]
+    provider.addFeatures(features)
+    events_layer.updateExtents()
+
+    return events_layer
+
+
+BOUNDARIES_LAYER_NAME = "boundaries"
+BOUNDARIES_URL = "https://raw.githubusercontent.com/WFP-VAM/prism-app/refs/heads/master/frontend/public/data/global/adm0_simplified.json"
 boundaries_layer = QgsVectorLayer(BOUNDARIES_URL, BOUNDARIES_LAYER_NAME, "ogr")
 boundaries_layer.setSubsetString("iso3 = 'DOM'")
-
 extent = boundaries_layer.extent()
 
-end_date = date.today().isoformat()
-
-api_features = get_api_features(extent, "2010-01-01", end_date, 5)
-
-events_layer = QgsVectorLayer("Point", EVENTS_LAYER_NAME, "memory")
-provider = events_layer.dataProvider()
-
-provider.addAttributes(fields)
-events_layer.updateFields()
-
-features = [create_qgis_feature(fields, r) for r in api_features]
-provider.addFeatures(features)
-events_layer.updateExtents()
-
+events_layer = create_usgs_layer(extent)
 
 project = QgsProject.instance()
 project.addMapLayer(boundaries_layer)
