@@ -65,14 +65,13 @@ def create_qgis_feature(fields, row):
 
 def create_usgs_layer(extent):
     api_features = get_api_features(extent, START_DATE, END_DATE, 5)
+    features = [create_qgis_feature(fields, r) for r in api_features]
 
     events_layer = QgsVectorLayer("Point", EVENTS_LAYER_NAME, "memory")
     provider = events_layer.dataProvider()
 
     provider.addAttributes(fields)
     events_layer.updateFields()
-
-    features = [create_qgis_feature(fields, r) for r in api_features]
     provider.addFeatures(features)
     events_layer.updateExtents()
 

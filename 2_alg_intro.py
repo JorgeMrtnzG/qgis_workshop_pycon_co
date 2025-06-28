@@ -76,11 +76,11 @@ def create_qgis_feature(fields, row):
 @alg.input(
     type=alg.DATETIME,
     name="start_date",
-    label="End date",
+    label="Start date",
     default=START_DATE.isoformat(),
 )
 @alg.input(
-    type=alg.DATETIME, name="end_date", label="Start date", default=END_DATE.isoformat()
+    type=alg.DATETIME, name="end_date", label="End date", default=END_DATE.isoformat()
 )
 @alg.input(type=alg.SINK, name=EVENTS_LAYER_NAME, label=EVENTS_LAYER_NAME)
 def create_usgs_layer(instance, parameters, context, feedback, inputs):
